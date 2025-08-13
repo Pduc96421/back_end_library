@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import Document from "../models/document.model";
 import Tag from "../models/tag.model";
-import { getAccessibleDocumentIds, mapDocumentToResponse } from "../../../helpers/format-document";
+import {
+  formatSearchDocument,
+  getAccessibleDocumentIds,
+  mapDocumentToResponse,
+} from "../../../helpers/format-document";
 import { getPagination } from "../../../helpers/pagination";
 import DocumentTag from "../models/document-tag.model";
 import DocumentView from "../models/document-view.model";
@@ -11,11 +15,14 @@ import DocumentAccess from "../models/document-access.model";
 import DocumentRating from "../models/document-rating.model";
 import User from "../models/user.model";
 
-const find = { status: "APPROVED", is_public: true };
+let find: any = { status: "APPROVED", is_public: true };
 
 // Get /documents/all-document
 export const getAllDocuments = async (req: Request, res: Response) => {
   try {
+    if (req.user.role === "ADMIN") {
+      find = {};
+    }
     // Pagination
     const { page, size, skip } = getPagination(req.query);
     const documents = await Document.find(find).skip(skip).limit(size);
@@ -73,7 +80,6 @@ export const searchDocuments = async (req: Request, res: Response) => {
       }
     }
 
-    // Add keyword search if provided
     if (keyword) {
       const keywordCondition = {
         $or: [{ title: { $regex: keyword, $options: "i" } }, { description: { $regex: keyword, $options: "i" } }],
@@ -88,7 +94,7 @@ export const searchDocuments = async (req: Request, res: Response) => {
     const totalElements = await Document.countDocuments(query);
     const totalPages = Math.ceil(totalElements / size);
 
-    const content = await Promise.all(documents.map(mapDocumentToResponse));
+    const content = await Promise.all(documents.map(formatSearchDocument));
 
     return res.status(200).json({
       code: 200,
@@ -426,21 +432,14 @@ export const uploadDocument = async (req: Request, res: Response) => {
 
 export const getAllTags = async (req: Request, res: Response) => {
   try {
-    const { page, size, skip } = getPagination(req.query);
-    const tags = await Tag.find().skip(skip).limit(size);
-    const totalElements = await Tag.countDocuments();
-    const totalPages = Math.ceil(totalElements / size);
+    const tags = await Tag.find();
+
+    const content = tags.map((tag) => ({ id: tag._id, name: tag.name }));
 
     return res.status(200).json({
       code: 200,
       message: "Lấy tất cả thẻ thành công",
-      result: {
-        content: tags.map((tag) => ({ id: tag._id, name: tag.name })),
-        page,
-        size,
-        totalElements,
-        totalPages,
-      },
+      result: content,
     });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });

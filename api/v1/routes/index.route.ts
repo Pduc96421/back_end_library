@@ -9,7 +9,11 @@ import { authRoute } from "./auth.route";
 import { usersRoute } from "./user.route";
 import { notificationRoute } from "./notification.route";
 
+import * as authMiddleware from "../../../middlewares/auth.middleware";
+
 export const routeApiV1 = (app: Express): void => {
+  app.use(authMiddleware.infoUser);
+
   app.use("/documents", documentRoute);
   app.use("/reminders", reminderRoute);
   app.use("/library", libraryRoute);

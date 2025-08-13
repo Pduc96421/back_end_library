@@ -12,6 +12,16 @@ interface DocumentAccess {
   user_id: Types.ObjectId;
 }
 
+interface SearchDocumentResponse {
+  id: Types.ObjectId;
+  title: string;
+  description: string;
+  fileUrl: string;
+  previewUrls: string[];
+  tags: any[];
+  status: string;
+}
+
 export async function mapDocumentToResponse(doc: any) {
   // Đếm views, likes, downloads
   const views = await DocumentView.countDocuments({ document_id: doc._id });
@@ -23,10 +33,10 @@ export async function mapDocumentToResponse(doc: any) {
   const averageRating = ratings.length > 0 ? ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratings.length : 0;
 
   // Lấy tags
-  const tags = await DocumentTag.find({ document_id: doc._id }).select("id name");
+  const tags = await DocumentTag.find({ document_id: doc._id }).populate("tag_id", "name");
   const tagList = tags.map((tag: any) => ({
-    id: tag.id || tag._id,
-    name: tag.name,
+    id: tag.tag_id._id,
+    name: tag.tag_id.name,
   }));
 
   // Lấy category
@@ -65,4 +75,22 @@ export async function mapDocumentToResponse(doc: any) {
 export async function getAccessibleDocumentIds(userId: string): Promise<string[]> {
   const accessRecords = (await DocumentAccess.find({ user_id: userId })) as DocumentAccess[];
   return accessRecords.map((record) => record.document_id.toString());
+}
+
+export async function formatSearchDocument(doc: any): Promise<SearchDocumentResponse> {
+  const tags = await DocumentTag.find({ document_id: doc._id }).populate("tag_id", "name");
+  const tagList = tags.map((tag: any) => ({
+    id: tag.tag_id._id,
+    name: tag.tag_id.name,
+  }));
+
+  return {
+    id: doc._id,
+    title: doc.title,
+    description: doc.description,
+    fileUrl: doc.file_url,
+    previewUrls: doc.preview_urls || [],
+    tags: tagList,
+    status: doc.status,
+  };
 }

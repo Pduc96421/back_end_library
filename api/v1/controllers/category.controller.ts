@@ -3,12 +3,14 @@ import Category from "../models/category.model";
 import { getPagination } from "../../../helpers/pagination";
 import { mapDocumentToResponse } from "../../../helpers/format-document";
 import Document from "../models/document.model";
+import { formatCategory } from "../../../helpers/format-cateogry";
 
 // Get /categories
 export const getAllCategories = async (req: Request, res: Response) => {
   try {
     const categories = await Category.find({ status: "ACTIVE" });
-    return res.status(200).json({ code: 200, message: "Lấy danh sách danh mục thành công", result: categories });
+    const content = categories.map(formatCategory);
+    return res.status(200).json({ code: 200, message: "Lấy danh sách danh mục thành công", result: content });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
   }
@@ -40,7 +42,9 @@ export const getCategoryById = async (req: Request, res: Response) => {
     if (!category) {
       return res.status(404).json({ code: 404, message: "Không tìm thấy danh mục" });
     }
-    return res.status(200).json({ code: 200, message: "Lấy chi tiết danh mục thành công", result: category });
+
+    const content = formatCategory(category);
+    return res.status(200).json({ code: 200, message: "Lấy chi tiết danh mục thành công", result: content });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
   }
@@ -131,10 +135,13 @@ export const searchCategories = async (req: Request, res: Response) => {
         },
       ],
     });
+
+    const content = categories.map(formatCategory);
+
     return res.status(200).json({
       code: 200,
       message: "Tìm kiếm danh mục thành công",
-      result: categories,
+      result: content,
     });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
