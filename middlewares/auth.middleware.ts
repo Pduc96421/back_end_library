@@ -6,6 +6,7 @@ declare global {
   namespace Express {
     interface Request {
       user?: any;
+      local?: any;
     }
   }
 }
@@ -31,13 +32,26 @@ export const verifyAdmin = (req: Request, res: Response, next: NextFunction): an
 };
 
 export const infoUser = async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-  const authHeader = req.headers["authorization"];
-  const token = authHeader && authHeader.split(" ")[1];
+  try {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
 
-  const user = await User.findOne({ token: token, deleted: false });
+    // Initialize req.local if it doesn't exist
+    req.local = req.local || {};
 
-  if (user) {
-    req.user = user;
+    if (token) {
+      const user = await User.findOne({ token: token, deleted: false });
+      if (user) {
+        req.local.user = user;
+      }
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi xác thực người dùng",
+      error: error.message,
+    });
   }
-  next();
 };

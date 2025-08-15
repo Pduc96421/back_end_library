@@ -1,48 +1,25 @@
 import { Request, Response } from "express";
 import Reminder from "../models/reminder.model";
 import Document from "../models/document.model";
-import User from "../models/user.model";
-import { sendEmail } from "../../../helpers/sendMail";
 import { scheduleReminder } from "../../../config/redis-queue";
-
-// Helper function to format reminder response
-const mapReminderToResponse = async (reminder: any) => {
-  return {
-    id: reminder._id,
-    title: reminder.title,
-    description: reminder.description,
-    remindAt: reminder.remindAt,
-    active: reminder.active,
-    sent: reminder.sent,
-    createdAt: reminder.createdAt,
-    updatedAt: reminder.updatedAt,
-  };
-};
-
-// Helper function to send reminder email
-const sendReminderEmail = async (user: any, reminder: any) => {
-  const subject = `Nhắc nhở: ${reminder.title}`;
-  const html = `
-    <h2>Xin chào ${user.username || user.email}!</h2>
-    <p>Bạn có một nhắc nhở về tài liệu:</p>
-    <p><strong>Tiêu đề:</strong> ${reminder.title}</p>
-    <p><strong>Mô tả:</strong> ${reminder.description}</p>
-    <p><strong>Thời gian:</strong> ${new Date(reminder.remindAt).toLocaleString("vi-VN")}</p>
-  `;
-
-  await sendEmail(user.email, subject, html);
-};
+import { getPagination } from "../../../helpers/pagination";
+import { formatPaginatedResponse, formatReminder } from "../../../helpers/format-reminder";
 
 export const getAllReminders = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.id;
-    const reminders = await Reminder.find({ user_id: userId }).sort({ remindAt: 1 });
+    const { page, size, skip } = getPagination(req.query);
 
-    const formattedReminders = await Promise.all(reminders.map(mapReminderToResponse));
+    const [reminders, total] = await Promise.all([
+      Reminder.find({ user_id: userId }).sort({ remindAt: 1 }).skip(skip).limit(size),
+      Reminder.countDocuments({ user_id: userId }),
+    ]);
 
-    return res
-      .status(200)
-      .json({ code: 200, message: "Lấy danh sách nhắc nhở thành công", result: formattedReminders });
+    return res.status(200).json({
+      code: 200,
+      message: "Lấy danh sách nhắc nhở thành công",
+      result: formatPaginatedResponse(reminders, page, size, total),
+    });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
   }
@@ -59,7 +36,7 @@ export const getReminderById = async (req: Request, res: Response) => {
       return res.status(404).json({ code: 404, message: "Không tìm thấy nhắc nhở" });
     }
 
-    const formattedReminder = await mapReminderToResponse(reminder);
+    const formattedReminder = formatReminder(reminder);
     return res.status(200).json({ code: 200, message: "Lấy nhắc nhở thành công", result: formattedReminder });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
@@ -91,7 +68,8 @@ export const createReminder = async (req: Request, res: Response) => {
     });
     await scheduleReminder(reminder);
 
-    const formattedReminder = await mapReminderToResponse(reminder);
+    const formattedReminder = formatReminder(reminder);
+
     return res.status(201).json({ code: 201, message: "Tạo nhắc nhở thành công", result: formattedReminder });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
@@ -117,7 +95,7 @@ export const toggleReminder = async (req: Request, res: Response) => {
       await scheduleReminder(reminder);
     }
 
-    const formattedReminder = await mapReminderToResponse(reminder);
+    const formattedReminder = formatReminder(reminder);
     return res
       .status(200)
       .json({ code: 200, message: `Đã ${reminder.active ? "bật" : "tắt"} nhắc nhở`, result: formattedReminder });
@@ -146,7 +124,7 @@ export const updateReminder = async (req: Request, res: Response) => {
       return res.status(404).json({ code: 404, message: "Không tìm thấy nhắc nhở" });
     }
 
-    const formattedReminder = await mapReminderToResponse(reminder);
+    const formattedReminder = formatReminder(reminder);
     return res.status(200).json({ code: 200, message: "Cập nhật nhắc nhở thành công", result: formattedReminder });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
@@ -169,4 +147,3 @@ export const deleteReminder = async (req: Request, res: Response) => {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
   }
 };
-

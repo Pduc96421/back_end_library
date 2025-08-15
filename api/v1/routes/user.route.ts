@@ -19,7 +19,7 @@ router.get("/library", authMiddleware.verifyToken, userController.getLibrary);
 
 router.post("/sent-confirm-account", userController.sentConfirmAccount);
 
-router.get("/confirm-account/:validKey", userController.confirmAccount);
+router.post("/confirm-account", userController.confirmAccount);
 
 router.get("/:userId/detail", authMiddleware.verifyToken, userController.getUser);
 

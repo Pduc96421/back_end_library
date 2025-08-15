@@ -3,7 +3,6 @@ import User from "../models/user.model";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-// Secret key cho JWT (nên lưu vào biến môi trường)
 const JWT_SECRET = process.env.JWT_SECRET;
 
 // Post /auth/login
@@ -24,7 +23,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     if (!user.email_verified) {
-      return res.status(403).json({ code: 403, message: "Email chưa được xác thực" });
+      return res.status(402).json({ code: 402, message: "Email chưa được xác thực" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

@@ -20,25 +20,25 @@ let find: any = { status: "APPROVED", is_public: true };
 // Get /documents/all-document
 export const getAllDocuments = async (req: Request, res: Response) => {
   try {
-    if (req.user.role === "ADMIN") {
-      find = {};
-    }
-    // Pagination
+    const myUser = (req as any).local.user;
     const { page, size, skip } = getPagination(req.query);
-    const documents = await Document.find(find).skip(skip).limit(size);
+    let documents = [];
+    let totalElements: number = 0;
+    if (myUser?.role === "ADMIN") {
+      documents = await Document.find().skip(skip).limit(size);
+       totalElements = await Document.countDocuments();
+    } else {
+      documents = await Document.find(find).skip(skip).limit(size);
+       totalElements = await Document.countDocuments(find);
+    }
 
-    const totalElements = await Document.countDocuments(find);
     const totalPages = Math.ceil(totalElements / size);
 
     const content = await Promise.all(documents.map(mapDocumentToResponse));
 
     const result = { content, page, size, totalElements, totalPages };
 
-    return res.status(200).json({
-      code: 200,
-      message: "Lấy danh sách tài liệu thành công",
-      result,
-    });
+    return res.status(200).json({ code: 200, message: "Lấy danh sách tài liệu thành công", result });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
   }

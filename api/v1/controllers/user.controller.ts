@@ -159,16 +159,14 @@ export const sentConfirmAccount = async (req: Request, res: Response): Promise<a
   }
 };
 
-// GET /users/confirm-account/:validKey
+// GET /users/confirm-account/
 export const confirmAccount = async (req: Request, res: Response) => {
   try {
-    const { validKey } = req.params;
-    if (!validKey) {
-      return res.status(400).json({ code: 400, message: "Thiếu mã xác thực" });
-    }
+    const { email, otpConfirm } = req.body;
 
     const forgot = await ForgotPassword.findOne({
-      otp: validKey,
+      email: email,
+      otp: otpConfirm,
       action: "confirm-account",
     }).sort({ createdAt: -1 });
 
@@ -176,7 +174,7 @@ export const confirmAccount = async (req: Request, res: Response) => {
       return res.status(404).json({ code: 404, message: "Mã xác thực không đúng hoặc đã hết hạn" });
     }
 
-    const user = await User.findOne({ email: forgot.email });
+    const user = await User.findOne({ email: email });
     if (!user) {
       return res.status(404).json({ code: 404, message: "Không tìm thấy tài khoản để xác nhận" });
     }
@@ -215,18 +213,19 @@ export const getUser = async (req: Request, res: Response) => {
 export const updateUser = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const updateData: any = {};
-    if (req.body.fullName) updateData.full_name = req.body.fullName;
-    if (req.body.phoneNumber) updateData.phone_number = req.body.phoneNumber;
-    if (req.body.dob) updateData.dob = req.body.dob;
-    if (req.body.avatarUrl) updateData.avatar = req.body.avatarUrl;
+    const updateData = req.body;
+    const myUserId = req.user.id;
 
-    const user = await User.findByIdAndUpdate(userId, updateData, { new: true, runValidators: true });
-
-    if (!user) {
-      return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+    if (req.user.role !== "admin") {
+      if (userId !== myUserId) {
+        return res.status(403).json({ code: 403, message: "Bạn không có quyền để update user này" });
+      }
     }
-    return res.status(200).json({ code: 200, message: "Cập nhật thông tin thành công", result: user });
+
+    await User.updateOne({ _id: userId, deleted: false }, { $set: updateData });
+    const updatedUser = await User.findById(userId);
+
+    return res.status(200).json({ code: 200, message: "Cập nhật thông tin thành công", result: updatedUser });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
   }
