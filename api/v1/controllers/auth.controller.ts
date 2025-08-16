@@ -23,7 +23,7 @@ export const login = async (req: Request, res: Response) => {
     }
 
     if (!user.email_verified) {
-      return res.status(402).json({ code: 402, message: "Email chưa được xác thực" });
+      return res.status(402).json({ code: 402, message: "Email chưa được xác thực", result: { email: user.email } });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

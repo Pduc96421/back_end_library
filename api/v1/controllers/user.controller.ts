@@ -129,6 +129,10 @@ export const sentConfirmAccount = async (req: Request, res: Response): Promise<a
       return res.status(404).json({ code: 404, message: "User not found" });
     }
 
+    if (user.email_verified) {
+      return res.status(400).json({ code: 400, message: "Email đã được xác thực" });
+    }
+
     // 1: tạo mã otp và lưu otp, email yêu cầu vào collection
     const otp = generateHelper.generateRandomString(10);
 
@@ -351,6 +355,57 @@ export const forgotPassword = async (req: Request, res: Response) => {
     sendEmail(email, subject, html);
 
     return res.status(200).json({ code: 200, message: "Đã gửi mã xác thực đặt lại mật khẩu về email", result: "OK" });
+  } catch (error: any) {
+    return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+  }
+};
+
+// Post /users/verify-forgot-password
+export const verifyForgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ code: 400, message: "Vui lòng cung cấp email và mã OTP" });
+    }
+
+    const forgotPassword = await ForgotPassword.findOne({
+      email,
+      otp,
+      action: "reset-password",
+      expireAt: { $gt: new Date() },
+    });
+
+    if (!forgotPassword) {
+      return res.status(400).json({ code: 400, message: "Mã OTP không đúng hoặc đã hết hạn" });
+    }
+
+    // Find user and generate new password
+    const user = await User.findOne({ email, deleted: false });
+    if (!user) {
+      return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+    }
+
+    const newPassword = generateHelper.generateValidPassword();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    await ForgotPassword.deleteOne({ _id: forgotPassword._id });
+
+    const subject = "Mật khẩu mới của bạn";
+    const html = `
+      <h2>Xin chào ${user.full_name || user.username}!</h2>
+      <p>Mật khẩu mới của bạn là: <b style="color: green;">${newPassword}</b></p>
+      <p>Vui lòng đăng nhập và đổi mật khẩu ngay sau khi nhận được email này.</p>
+      <p>Vì lý do bảo mật, không chia sẻ mật khẩu với bất kỳ ai.</p>
+    `;
+    sendEmail(email, subject, html);
+
+    return res
+      .status(200)
+      .json({ code: 200, message: "Xác thực thành công. Mật khẩu mới đã được gửi về email của bạn." });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
   }

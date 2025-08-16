@@ -46,6 +46,8 @@ router.post("/register", userValidation.register, userController.register);
 
 router.post("/forgot-password", userController.forgotPassword);
 
+router.post("/verify-forgot-password", userController.verifyForgotPassword);
+
 router.post(
   "/create",
   authMiddleware.verifyToken,
@@ -54,4 +56,4 @@ router.post(
   userController.createUser,
 );
 
-export const usersRoute = router;
+export const userRoute = router;

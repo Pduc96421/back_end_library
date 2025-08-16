@@ -1,7 +1,8 @@
-import { Schema, model } from "mongoose";
-
-const userSchema = new Schema(
-  {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.User = void 0;
+const mongoose_1 = require("mongoose");
+const userSchema = new mongoose_1.Schema({
     full_name: { type: String, required: true },
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
@@ -16,18 +17,15 @@ const userSchema = new Schema(
     deleted: { type: Boolean, default: false },
     deletedAt: { type: Date },
     token: { type: String, select: false },
-    acceptFriends: [{ user_id: { type: Schema.Types.ObjectId, ref: "User", required: true }, _id: false }],
-    requestFriends: [{ user_id: { type: Schema.Types.ObjectId, ref: "User", required: true }, _id: false }],
+    acceptFriends: [{ user_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true }, _id: false }],
+    requestFriends: [{ user_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true }, _id: false }],
     friendList: [
-      {
-        user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
-        room_chat_id: { type: Schema.Types.ObjectId, ref: "RoomChat", required: true },
-        _id: false,
-      },
+        {
+            user_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
+            room_chat_id: { type: mongoose_1.Schema.Types.ObjectId, ref: "RoomChat", required: true },
+            _id: false,
+        },
     ],
-  },
-  { timestamps: true },
-);
-
-export const User = model("User", userSchema, "users");
-export default User;
+}, { timestamps: true });
+exports.User = (0, mongoose_1.model)("User", userSchema, "users");
+exports.default = exports.User;

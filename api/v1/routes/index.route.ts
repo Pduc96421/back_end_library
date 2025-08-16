@@ -6,8 +6,11 @@ import { commentRoute } from "./comment.route";
 import { categoryRoute } from "./category.route";
 import { roleRoute } from "./role.route";
 import { authRoute } from "./auth.route";
-import { usersRoute } from "./user.route";
+import { userRoute } from "./user.route";
 import { notificationRoute } from "./notification.route";
+import { chatRoute } from "./chat.route";
+import { roomChatRoute } from "./room-chat.route";
+import { usersRoute } from "./users.route";
 
 import * as authMiddleware from "../../../middlewares/auth.middleware";
 
@@ -21,6 +24,10 @@ export const routeApiV1 = (app: Express): void => {
   app.use("/categories", categoryRoute);
   app.use("/roles", roleRoute);
   app.use("/auth", authRoute);
-  app.use("/users", usersRoute);
+  app.use("/users", userRoute);
   app.use("/notifications", notificationRoute);
+
+  app.use("/chats", authMiddleware.verifyToken, chatRoute);
+  app.use("/room-chat", authMiddleware.verifyToken, roomChatRoute);
+  app.use("/user-fr", authMiddleware.verifyToken, usersRoute);
 };

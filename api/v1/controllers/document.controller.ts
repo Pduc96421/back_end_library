@@ -26,10 +26,10 @@ export const getAllDocuments = async (req: Request, res: Response) => {
     let totalElements: number = 0;
     if (myUser?.role === "ADMIN") {
       documents = await Document.find().skip(skip).limit(size);
-       totalElements = await Document.countDocuments();
+      totalElements = await Document.countDocuments();
     } else {
       documents = await Document.find(find).skip(skip).limit(size);
-       totalElements = await Document.countDocuments(find);
+      totalElements = await Document.countDocuments(find);
     }
 
     const totalPages = Math.ceil(totalElements / size);
@@ -61,45 +61,46 @@ export const searchDocuments = async (req: Request, res: Response) => {
   try {
     const { page, size, skip } = getPagination(req.query);
     const { keyword, tag } = req.query;
+    let query: any = { status: "APPROVED", is_public: true };
 
-    let query: any = find;
-    let documentIds: any[] = [];
+    if (keyword) {
+      query = {
+        ...query,
+        $or: [{ title: { $regex: keyword, $options: "i" } }, { description: { $regex: keyword, $options: "i" } }],
+      };
+    }
 
     if (tag) {
-      const tagDoc = await Tag.findOne({ name: { $regex: tag, $options: "i" } });
-      if (tagDoc) {
-        const docTags = await DocumentTag.find({ tag_id: tagDoc._id });
-        documentIds = docTags.map((dt) => dt.document_id);
-        query._id = { $in: documentIds };
-      } else {
-        return res.status(200).json({
-          code: 200,
-          message: "Tìm kiếm tài liệu thành công",
-          result: { content: [], page, size, totalElements: 0, totalPages: 0 },
-        });
+      const foundTags = await Tag.find({ name: { $regex: tag, $options: "i" } });
+
+      if (foundTags.length > 0) {
+        const tagIds = foundTags.map((t) => t._id);
+        const docTags = await DocumentTag.find({ tag_id: { $in: tagIds } }).populate("document_id");
+
+        if (docTags.length > 0) {
+          const documentIds = docTags.map((dt) => dt.document_id);
+          query._id = { $in: documentIds };
+        } else {
+          return res.status(200).json({
+            code: 200,
+            message: "Tìm kiếm tài liệu thành công",
+            result: { content: [], page, size, totalElements: 0, totalPages: 0 },
+          });
+        }
       }
     }
 
-    if (keyword) {
-      const keywordCondition = {
-        $or: [{ title: { $regex: keyword, $options: "i" } }, { description: { $regex: keyword, $options: "i" } }],
-      };
-
-      // Combine with tag condition if exists
-      query = tag ? { ...query, ...keywordCondition } : keywordCondition;
-    }
-
-    // Execute search with combined conditions
-    const documents = await Document.find(query).skip(skip).limit(size);
-    const totalElements = await Document.countDocuments(query);
-    const totalPages = Math.ceil(totalElements / size);
+    const [documents, totalElements] = await Promise.all([
+      Document.find(query).sort({ createdAt: -1 }).skip(skip).limit(size),
+      Document.countDocuments(query),
+    ]);
 
     const content = await Promise.all(documents.map(formatSearchDocument));
 
     return res.status(200).json({
       code: 200,
       message: "Tìm kiếm tài liệu thành công",
-      result: { content, page, size, totalElements, totalPages },
+      result: { content, page, size, totalElements, totalPages: Math.ceil(totalElements / size) },
     });
   } catch (error: any) {
     return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
