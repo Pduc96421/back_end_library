@@ -209,7 +209,7 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const docPage = parseInt(req.query.docPage || "1");
         const docSize = parseInt(req.query.docSize || "10");
         const { userId } = req.params;
-        const user = yield user_model_1.default.findById({ userId, deleted: false });
+        const user = yield user_model_1.default.findOne({ _id: userId, deleted: false });
         if (!user) {
             return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
         }

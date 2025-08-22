@@ -200,7 +200,7 @@ export const getUser = async (req: Request, res: Response) => {
     const docSize = parseInt((req.query.docSize as string) || "10");
     const { userId } = req.params;
 
-    const user = await User.findById({ userId, deleted: false });
+    const user = await User.findOne({ _id: userId, deleted: false });
     if (!user) {
       return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
     }
