@@ -43,6 +43,7 @@ export const uploadFile = async (req: Request, res: Response, next: NextFunction
 
     const fileOptions = {
       folder: "library-documents",
+      public_id: publicId,
       resource_type: "auto", // hoặc "raw"
       type: "upload",
       format: fileExtension,
@@ -55,15 +56,19 @@ export const uploadFile = async (req: Request, res: Response, next: NextFunction
 
     // Nếu là PDF, tạo ảnh preview
     if (fileExtension === "pdf") {
-      const previewOptions = {
-        folder: "library-documents/previews",
-        resource_type: "image",
-        type: "upload",
-        format: "jpg",
-        transformation: [{ page: 1 }, { quality: "auto" }, { fetch_format: "auto" }],
-      };
-      const previewResult: any = await streamUpload(req.file.buffer, previewOptions);
-      req.body.preview_urls = [previewResult.secure_url];
+      const previewPromises = Array.from({ length: 5 }, (_, i) => {
+        const previewOptions = {
+          folder: "library-documents/previews",
+          resource_type: "image",
+          type: "upload",
+          format: "jpg",
+          transformation: [{ page: i + 1 }, { quality: "auto" }, { fetch_format: "auto" }],
+        };
+        return streamUpload(req.file!.buffer, previewOptions);
+      });
+
+      const previewResults = await Promise.all(previewPromises);
+      req.body.preview_urls = previewResults.map((result: any) => result.secure_url);
     } else {
       req.body.preview_urls = [];
     }

@@ -30,7 +30,7 @@ function mapUserFullResponse(user_1) {
             fullName: user.full_name,
             username: user.username,
             email: user.email,
-            avatarUrl: user.avatar,
+            avatarUrl: user.avatarUrl,
             status: user.status,
             dob: user.dob,
             emailVerified: user.email_verified,
