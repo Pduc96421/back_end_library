@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.momoCreate = exports.vnpayReturn = exports.createQr = void 0;
+exports.checkCiCd = exports.momoCreate = exports.vnpayReturn = exports.createQr = void 0;
 const vnpay_1 = require("vnpay");
 const createQr = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const vnpay = new vnpay_1.VNPay({
@@ -139,3 +139,9 @@ const momoCreate = (req1, res1) => __awaiter(void 0, void 0, void 0, function* (
     req.end();
 });
 exports.momoCreate = momoCreate;
+const checkCiCd = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    return res.status(200).json({
+        message: "CI CD done",
+    });
+});
+exports.checkCiCd = checkCiCd;

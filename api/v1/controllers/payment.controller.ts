@@ -155,3 +155,9 @@ export const momoCreate = async (req1: Request, res1: Response) => {
   req.write(requestBody);
   req.end();
 };
+
+export const checkCiCd = async (req: Request, res: Response) => {
+  return res.status(200).json({
+    message: "CI CD done",
+  });
+};
