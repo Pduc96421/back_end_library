@@ -45,12 +45,32 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const swagger_config_1 = require("./config/swagger.config");
+const compression_1 = __importDefault(require("compression"));
 dotenv_1.default.config();
 const index_route_1 = require("./api/v1/routes/index.route");
 require("./config/redis-queue");
 const app = (0, express_1.default)();
 const port = process.env.PORT;
 const corsOptions = { origin: process.env.CORS_ORIGIN };
+app.use((0, compression_1.default)({
+    threshold: 1024,
+    filter: (req, res) => {
+        if (req.headers["upgrade"] === "websocket") {
+            return false;
+        }
+        const contentType = res.getHeader("Content-Type");
+        if (!contentType)
+            return false;
+        const type = contentType.toString().toLowerCase();
+        if (type.startsWith("text/") ||
+            type.includes("application/json") ||
+            type.includes("application/javascript") ||
+            type.includes("text/css")) {
+            return compression_1.default.filter(req, res);
+        }
+        return false;
+    },
+}));
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {
