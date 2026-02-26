@@ -6,6 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import http from "http";
 import { Server } from "socket.io";
+import { setupSwagger } from "./config/swagger.config";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use(bodyParser.json());
 app.use(cors(corsOptions));
 
 routeApiV1(app);
+setupSwagger(app);
 
 server.listen(port, () => {
   console.log(`App listening on port ${port}`);

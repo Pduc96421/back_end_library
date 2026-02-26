@@ -108,8 +108,8 @@ export const addFriend = async (req: Request, res: Response): Promise<any> => {
     const currentUserId = req.user.id;
     const { userId } = req.params;
 
-    const currentUser = await User.findById(currentUserId);
-    const targetUser = await User.findById(userId);
+      const currentUser = await User.findById(currentUserId);
+      const targetUser = await User.findById(userId);
 
     if (!targetUser) {
       return res.status(404).json({ code: 404, message: "User to add not found" });

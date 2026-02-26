@@ -32,39 +32,12 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const database = __importStar(require("./config/database"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const body_parser_1 = __importDefault(require("body-parser"));
-const cors_1 = __importDefault(require("cors"));
-const cookie_parser_1 = __importDefault(require("cookie-parser"));
-const http_1 = __importDefault(require("http"));
-const socket_io_1 = require("socket.io");
-const swagger_config_1 = require("./config/swagger.config");
-dotenv_1.default.config();
-const index_route_1 = require("./api/v1/routes/index.route");
-require("./config/redis-queue");
-const app = (0, express_1.default)();
-const port = process.env.PORT;
-const corsOptions = { origin: process.env.CORS_ORIGIN };
-const server = http_1.default.createServer(app);
-const io = new socket_io_1.Server(server, {
-    cors: {
-        origin: process.env.CORS_ORIGIN,
-        credentials: true,
-    },
-});
-global._io = io;
-database.connect();
-app.use((0, cookie_parser_1.default)(process.env.COOKIE_SECRET));
-app.use(body_parser_1.default.json());
-app.use((0, cors_1.default)(corsOptions));
-(0, index_route_1.routeApiV1)(app);
-(0, swagger_config_1.setupSwagger)(app);
-server.listen(port, () => {
-    console.log(`App listening on port ${port}`);
-});
+exports.paymentRoute = void 0;
+const express_1 = require("express");
+const paymentController = __importStar(require("../controllers/payment.controller"));
+const router = (0, express_1.Router)();
+router.post("/create-qr", paymentController.createQr);
+router.post("/momo-create", paymentController.momoCreate);
+router.get("/vnpay-return", paymentController.vnpayReturn);
+exports.paymentRoute = router;

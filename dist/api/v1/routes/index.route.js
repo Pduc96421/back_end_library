@@ -47,6 +47,7 @@ const chat_route_1 = require("./chat.route");
 const room_chat_route_1 = require("./room-chat.route");
 const users_route_1 = require("./users.route");
 const authMiddleware = __importStar(require("../../../middlewares/auth.middleware"));
+const payment_route_1 = require("./payment.route");
 const routeApiV1 = (app) => {
     app.use(authMiddleware.infoUser);
     app.use("/documents", document_route_1.documentRoute);
@@ -58,6 +59,7 @@ const routeApiV1 = (app) => {
     app.use("/auth", auth_route_1.authRoute);
     app.use("/users", user_route_1.userRoute);
     app.use("/notifications", notification_route_1.notificationRoute);
+    app.use("/payments", payment_route_1.paymentRoute);
     app.use("/chats", authMiddleware.verifyToken, chat_route_1.chatRoute);
     app.use("/room-chat", authMiddleware.verifyToken, room_chat_route_1.roomChatRoute);
     app.use("/user-fr", authMiddleware.verifyToken, users_route_1.usersRoute);

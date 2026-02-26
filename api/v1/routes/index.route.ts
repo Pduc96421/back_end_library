@@ -13,6 +13,7 @@ import { roomChatRoute } from "./room-chat.route";
 import { usersRoute } from "./users.route";
 
 import * as authMiddleware from "../../../middlewares/auth.middleware";
+import { paymentRoute } from "./payment.route";
 
 export const routeApiV1 = (app: Express): void => {
   app.use(authMiddleware.infoUser);
@@ -26,6 +27,7 @@ export const routeApiV1 = (app: Express): void => {
   app.use("/auth", authRoute);
   app.use("/users", userRoute);
   app.use("/notifications", notificationRoute);
+  app.use("/payments", paymentRoute);
 
   app.use("/chats", authMiddleware.verifyToken, chatRoute);
   app.use("/room-chat", authMiddleware.verifyToken, roomChatRoute);
