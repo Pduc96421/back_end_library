@@ -25,15 +25,28 @@ const sendMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
         const isMember = room.users.some((u) => u.user_id.toString() === currentUserId);
         if (!isMember) {
-            return res.status(403).json({ code: 403, message: "You are not a member of this room" });
+            return res
+                .status(403)
+                .json({ code: 403, message: "You are not a member of this room" });
         }
         if (reply_chat_id) {
-            const originalMessage = yield chat_model_1.default.findOne({ _id: reply_chat_id, room_chat_id, deleted: false });
+            const originalMessage = yield chat_model_1.default.findOne({
+                _id: reply_chat_id,
+                room_chat_id,
+                deleted: false,
+            });
             if (!originalMessage) {
-                return res.status(400).json({ code: 400, message: "Reply target not found or invalid" });
+                return res
+                    .status(400)
+                    .json({ code: 400, message: "Reply target not found or invalid" });
             }
         }
-        const chat = new chat_model_1.default({ user_id: currentUserId, room_chat_id, content, reply_chat_id: reply_chat_id || null });
+        const chat = new chat_model_1.default({
+            user_id: currentUserId,
+            room_chat_id,
+            content,
+            reply_chat_id: reply_chat_id || null,
+        });
         yield chat.save();
         yield room_chat_model_1.default.findByIdAndUpdate(room_chat_id, { lastMessage: chat._id });
         res.status(200).json({ code: 200, message: "Message sent", result: chat });
@@ -50,7 +63,9 @@ const sendFileMessage = (req, res) => __awaiter(void 0, void 0, void 0, function
         const reply_chat_id = req.body.reply_chat_id;
         const currentUserId = req.user.id;
         if (!req.body.file_url) {
-            return res.status(400).json({ code: 400, message: "No file uploaded or invalid format" });
+            return res
+                .status(400)
+                .json({ code: 400, message: "No file uploaded or invalid format" });
         }
         const room = yield room_chat_model_1.default.findOne({ _id: room_chat_id, deleted: false });
         if (!room) {
@@ -58,7 +73,9 @@ const sendFileMessage = (req, res) => __awaiter(void 0, void 0, void 0, function
         }
         const isMember = room.users.some((u) => u.user_id.toString() === currentUserId);
         if (!isMember) {
-            return res.status(403).json({ code: 403, message: "You are not a member of this room" });
+            return res
+                .status(403)
+                .json({ code: 403, message: "You are not a member of this room" });
         }
         const newMessage = new chat_model_1.default({
             user_id: currentUserId,
@@ -69,8 +86,16 @@ const sendFileMessage = (req, res) => __awaiter(void 0, void 0, void 0, function
             reply_chat_id: reply_chat_id || null,
         });
         yield newMessage.save();
-        yield room_chat_model_1.default.findByIdAndUpdate(room_chat_id, { lastMessage: newMessage._id });
-        res.status(200).json({ code: 200, message: "File sent successfully", result: newMessage });
+        yield room_chat_model_1.default.findByIdAndUpdate(room_chat_id, {
+            lastMessage: newMessage._id,
+        });
+        res
+            .status(200)
+            .json({
+            code: 200,
+            message: "File sent successfully",
+            result: newMessage,
+        });
     }
     catch (error) {
         res.status(500).json({ code: 500, message: error.message });
@@ -88,7 +113,9 @@ const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         if (req.user.role !== "ADMIN") {
             const isMember = room.users.some((u) => u.user_id.toString() === currentUserId);
             if (!isMember) {
-                return res.status(403).json({ code: 403, message: "You are not a member of this room" });
+                return res
+                    .status(403)
+                    .json({ code: 403, message: "You are not a member of this room" });
             }
         }
         const messages = yield chat_model_1.default.find({ room_chat_id: roomId, deleted: false })
@@ -103,7 +130,9 @@ const getMessages = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         })
             .select("-__v")
             .sort({ createdAt: 1 });
-        res.status(200).json({ code: 200, message: "Messages retrieved", result: messages });
+        res
+            .status(200)
+            .json({ code: 200, message: "Messages retrieved", result: messages });
     }
     catch (error) {
         res.status(500).json({ code: 500, message: error.message });
@@ -121,12 +150,23 @@ const updateMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         if (req.user.role !== "ADMIN") {
             if (chat.user_id.toString() !== currentUserId) {
-                return res.status(403).json({ code: 403, message: "You can only update your own messages" });
+                return res
+                    .status(403)
+                    .json({
+                    code: 403,
+                    message: "You can only update your own messages",
+                });
             }
         }
         chat.content = content;
         yield chat.save();
-        res.status(200).json({ code: 200, message: "Message updated successfully", result: chat });
+        res
+            .status(200)
+            .json({
+            code: 200,
+            message: "Message updated successfully",
+            result: chat,
+        });
     }
     catch (error) {
         res.status(500).json({ code: 500, message: error.message });
@@ -155,7 +195,9 @@ const reactMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             chat.reactions.push({ user_id: currentUserId, icon });
         }
         yield chat.save();
-        res.status(200).json({ code: 200, message: "React success", result: chat.reactions });
+        res
+            .status(200)
+            .json({ code: 200, message: "React success", result: chat.reactions });
     }
     catch (error) {
         res.status(500).json({ code: 500, message: error.message });
@@ -206,15 +248,21 @@ const deleteMessage = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const currentUserId = req.user.id;
         const chat = yield chat_model_1.default.findById(chatId);
         if (!chat || chat.deleted) {
-            return res.status(404).json({ code: 404, message: "Chat not found or already deleted" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Chat not found or already deleted" });
         }
         if (chat.user_id.toString() !== currentUserId) {
-            return res.status(403).json({ code: 403, message: "You can only delete your own messages" });
+            return res
+                .status(403)
+                .json({ code: 403, message: "You can only delete your own messages" });
         }
         chat.deleted = true;
         chat.deletedAt = new Date();
         yield chat.save();
-        res.status(200).json({ code: 200, message: "Message deleted successfully" });
+        res
+            .status(200)
+            .json({ code: 200, message: "Message deleted successfully" });
     }
     catch (error) {
         res.status(500).json({ code: 500, message: error.message });
@@ -226,17 +274,26 @@ const deleteMultipleMessages = (req, res) => __awaiter(void 0, void 0, void 0, f
         const { chatIds } = req.body;
         const userId = req.user.id;
         if (!Array.isArray(chatIds) || chatIds.length === 0) {
-            return res.status(400).json({ code: 400, message: "chatIds must be a non-empty array" });
+            return res
+                .status(400)
+                .json({ code: 400, message: "chatIds must be a non-empty array" });
         }
         const chats = yield chat_model_1.default.find({ _id: { $in: chatIds }, deleted: false });
         if (req.user.role !== "ADMIN") {
             const unauthorized = chats.filter((chat) => chat.user_id.toString() !== userId);
             if (unauthorized.length > 0 && req.user.role !== "ADMIN") {
-                return res.status(403).json({ code: 403, message: "You can only delete your own messages" });
+                return res
+                    .status(403)
+                    .json({
+                    code: 403,
+                    message: "You can only delete your own messages",
+                });
             }
         }
         yield chat_model_1.default.updateMany({ _id: { $in: chatIds } }, { $set: { deleted: true, deletedAt: new Date() } });
-        res.status(200).json({ code: 200, message: "Messages deleted successfully" });
+        res
+            .status(200)
+            .json({ code: 200, message: "Messages deleted successfully" });
     }
     catch (error) {
         res.status(500).json({ code: 500, message: error.message });

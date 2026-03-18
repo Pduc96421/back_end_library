@@ -35,13 +35,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authRoute = void 0;
 const express_1 = require("express");
-const authController = __importStar(require("../controllers/auth.controller"));
+const auth_controller_1 = __importStar(require("../controllers/auth.controller")), authController = auth_controller_1;
 const authMiddleware = __importStar(require("../../../middlewares/auth.middleware"));
 const router = (0, express_1.Router)();
 router.post("/login", authController.login);
 router.post("/logout", authMiddleware.verifyToken, authController.logout);
 router.post("/refresh", authController.refreshToken);
 router.post("/validate-token", authMiddleware.verifyToken, authController.validateToken);
-router.get("/google-login", authController.googleLogin);
-router.get("/google-login-success", authController.googleLoginSuccess);
+router.post("/google-login", auth_controller_1.default.googleLogin);
 exports.authRoute = router;

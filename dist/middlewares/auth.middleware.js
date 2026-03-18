@@ -30,7 +30,9 @@ const verifyToken = (req, res, next) => {
 exports.verifyToken = verifyToken;
 const verifyAdmin = (req, res, next) => {
     if (req.user.role !== "ADMIN") {
-        return res.status(403).json({ code: 403, message: "Token từ chối truy cập" });
+        return res
+            .status(403)
+            .json({ code: 403, message: "Token từ chối truy cập" });
     }
     next();
 };

@@ -68,10 +68,16 @@ const getUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const totalPages = Math.ceil(totalElements / size);
         const content = yield Promise.all(users.map((user) => (0, format_user_1.mapUserFullResponse)(user, docPage, docSize)));
         const result = { content, page, size, totalElements, totalPages };
-        return res.status(200).json({ code: 200, message: "Lấy danh sách người dùng thành công", result });
+        return res.status(200).json({
+            code: 200,
+            message: "Lấy danh sách người dùng thành công",
+            result,
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.getUsers = getUsers;
@@ -94,28 +100,47 @@ const searchUsers = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const totalPages = Math.ceil(totalElements / size);
         const content = yield Promise.all(users.map((user) => (0, format_user_1.mapUserFullResponse)(user, docPage, docSize)));
         const result = { content, page, size, totalElements, totalPages };
-        return res.status(200).json({ code: 200, message: "Tìm kiếm thành công", result });
+        return res
+            .status(200)
+            .json({ code: 200, message: "Tìm kiếm thành công", result });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.searchUsers = searchUsers;
 const getMyInfo = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const docPage = parseInt(req.query.docPage || "1");
         const docSize = parseInt(req.query.docSize || "10");
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        const user = yield user_model_1.default.findById(userId);
+        const username = (_b = req.user) === null || _b === void 0 ? void 0 : _b.username;
+        const user = yield user_model_1.default.findOne({
+            $or: [
+                userId ? { _id: userId } : null,
+                username ? { username } : null,
+            ].filter(Boolean),
+        });
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+            return res.status(404).json({
+                code: 404,
+                message: "Không tìm thấy người dùng",
+            });
         }
         const content = yield (0, format_user_1.mapUserFullResponse)(user, docPage, docSize);
-        return res.status(200).json({ code: 200, message: "Lấy thông tin cá nhân thành công", result: content });
+        return res.status(200).json({
+            code: 200,
+            message: "Lấy thông tin cá nhân thành công",
+            result: content,
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.getMyInfo = getMyInfo;
@@ -126,7 +151,9 @@ const getLibrary = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const libraries = yield user_library_model_1.default.find({ user_id: userId });
         const result = yield Promise.all(libraries.map((library) => __awaiter(void 0, void 0, void 0, function* () {
             const user = yield user_model_1.default.findById(userId).select("username avatar phone_number");
-            const documentCount = yield library_document_model_1.default.countDocuments({ library_id: library._id });
+            const documentCount = yield library_document_model_1.default.countDocuments({
+                library_id: library._id,
+            });
             return {
                 id: library._id,
                 user: {
@@ -140,10 +167,14 @@ const getLibrary = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 documentCount,
             };
         })));
-        return res.status(200).json({ code: 200, message: "Lấy thư viện cá nhân thành công", result });
+        return res
+            .status(200)
+            .json({ code: 200, message: "Lấy thư viện cá nhân thành công", result });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.getLibrary = getLibrary;
@@ -155,7 +186,9 @@ const sentConfirmAccount = (req, res) => __awaiter(void 0, void 0, void 0, funct
             return res.status(404).json({ code: 404, message: "User not found" });
         }
         if (user.email_verified) {
-            return res.status(400).json({ code: 400, message: "Email đã được xác thực" });
+            return res
+                .status(400)
+                .json({ code: 400, message: "Email đã được xác thực" });
         }
         const otp = generateHelper.generateRandomString(10);
         const objectConfirmAccount = {
@@ -188,19 +221,27 @@ const confirmAccount = (req, res) => __awaiter(void 0, void 0, void 0, function*
             action: "confirm-account",
         }).sort({ createdAt: -1 });
         if (!forgot) {
-            return res.status(404).json({ code: 404, message: "Mã xác thực không đúng hoặc đã hết hạn" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Mã xác thực không đúng hoặc đã hết hạn" });
         }
         const user = yield user_model_1.default.findOne({ email: email });
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy tài khoản để xác nhận" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Không tìm thấy tài khoản để xác nhận" });
         }
         user.email_verified = true;
         yield user.save();
         yield forgot_password_model_1.default.deleteOne({ _id: forgot._id });
-        return res.status(200).json({ code: 200, message: "Xác nhận tài khoản thành công" });
+        return res
+            .status(200)
+            .json({ code: 200, message: "Xác nhận tài khoản thành công" });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.confirmAccount = confirmAccount;
@@ -211,13 +252,21 @@ const getUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const { userId } = req.params;
         const user = yield user_model_1.default.findOne({ _id: userId, deleted: false });
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Không tìm thấy người dùng" });
         }
         const content = yield (0, format_user_1.mapUserFullResponse)(user, docPage, docSize);
-        return res.status(200).json({ code: 200, message: "Lấy thông tin người dùng thành công", result: content });
+        return res.status(200).json({
+            code: 200,
+            message: "Lấy thông tin người dùng thành công",
+            result: content,
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.getUser = getUser;
@@ -228,29 +277,49 @@ const updateUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         const myUserId = req.user.id;
         if (req.user.role !== "admin") {
             if (userId !== myUserId) {
-                return res.status(403).json({ code: 403, message: "Bạn không có quyền để update user này" });
+                return res.status(403).json({
+                    code: 403,
+                    message: "Bạn không có quyền để update user này",
+                });
             }
         }
         yield user_model_1.default.updateOne({ _id: userId, deleted: false }, { $set: updateData });
         const updatedUser = yield user_model_1.default.findById(userId);
-        return res.status(200).json({ code: 200, message: "Cập nhật thông tin thành công", result: updatedUser });
+        return res.status(200).json({
+            code: 200,
+            message: "Cập nhật thông tin thành công",
+            result: updatedUser,
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.updateUser = updateUser;
 const deleteUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
-        const user = yield user_model_1.default.findByIdAndUpdate(userId, { deleted: true, deletedAt: new Date() });
+        const user = yield user_model_1.default.findByIdAndUpdate(userId, {
+            deleted: true,
+            deletedAt: new Date(),
+        });
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Không tìm thấy người dùng" });
         }
-        return res.status(200).json({ code: 200, message: "Xóa người dùng thành công", result: userId });
+        return res.status(200).json({
+            code: 200,
+            message: "Xóa người dùng thành công",
+            result: userId,
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.deleteUser = deleteUser;
@@ -260,25 +329,37 @@ const changePassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         const { currentPassword, newPassword, confirmPassword } = req.body;
         if (!currentPassword || !newPassword || !confirmPassword) {
-            return res.status(400).json({ code: 400, message: "Thiếu thông tin đổi mật khẩu" });
+            return res
+                .status(400)
+                .json({ code: 400, message: "Thiếu thông tin đổi mật khẩu" });
         }
         if (newPassword !== confirmPassword) {
-            return res.status(422).json({ code: 422, message: "Mật khẩu mới và xác nhận không khớp" });
+            return res
+                .status(422)
+                .json({ code: 422, message: "Mật khẩu mới và xác nhận không khớp" });
         }
         const user = yield user_model_1.default.findById(userId).select("+password");
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Không tìm thấy người dùng" });
         }
         const isMatch = yield bcryptjs_1.default.compare(currentPassword, user.password);
         if (!isMatch) {
-            return res.status(401).json({ code: 401, message: "Mật khẩu hiện tại không đúng" });
+            return res
+                .status(401)
+                .json({ code: 401, message: "Mật khẩu hiện tại không đúng" });
         }
         user.password = yield bcryptjs_1.default.hash(newPassword, 10);
         yield user.save();
-        return res.status(200).json({ code: 200, message: "Đổi mật khẩu thành công", result: "OK" });
+        return res
+            .status(200)
+            .json({ code: 200, message: "Đổi mật khẩu thành công", result: "OK" });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.changePassword = changePassword;
@@ -286,11 +367,15 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { username, email, password, fullName, dob } = req.body;
         if (!username || !email || !password || !fullName) {
-            return res.status(400).json({ code: 400, message: "Thiếu thông tin đăng ký" });
+            return res
+                .status(400)
+                .json({ code: 400, message: "Thiếu thông tin đăng ký" });
         }
         const existedUser = yield user_model_1.default.findOne({ $or: [{ username }, { email }] });
         if (existedUser) {
-            return res.status(409).json({ code: 409, message: "Tên đăng nhập hoặc email đã tồn tại" });
+            return res
+                .status(409)
+                .json({ code: 409, message: "Tên đăng nhập hoặc email đã tồn tại" });
         }
         const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
         const user = yield user_model_1.default.create({
@@ -308,10 +393,16 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }, JWT_SECRET);
         user.token = token;
         yield user.save();
-        return res.status(201).json({ code: 201, message: "Đăng ký tài khoản thành công", result: user });
+        return res.status(201).json({
+            code: 201,
+            message: "Đăng ký tài khoản thành công",
+            result: user,
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.register = register;
@@ -320,12 +411,20 @@ const openAccount = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const { userId } = req.params;
         const user = yield user_model_1.default.findByIdAndUpdate(userId, { status: "ACTIVE" }, { new: true });
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Không tìm thấy người dùng" });
         }
-        return res.status(200).json({ code: 200, message: "Mở khóa tài khoản thành công", result: user });
+        return res.status(200).json({
+            code: 200,
+            message: "Mở khóa tài khoản thành công",
+            result: user,
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.openAccount = openAccount;
@@ -337,7 +436,10 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         const user = yield user_model_1.default.findOne({ email, deleted: false });
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng với email này" });
+            return res.status(404).json({
+                code: 404,
+                message: "Không tìm thấy người dùng với email này",
+            });
         }
         const otp = generateHelper.generateRandomNumber(6);
         yield forgot_password_model_1.default.create({
@@ -349,10 +451,16 @@ const forgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const subject = "Yêu cầu đặt lại mật khẩu";
         const html = `Mã OTP xác thực của bạn là <b style="color: green;">${otp}</b>. Mã OTP có hiệu lực trong 5 phút. Vui lòng không cung cấp mã OTP cho người khác.`;
         (0, sendMail_1.sendEmail)(email, subject, html);
-        return res.status(200).json({ code: 200, message: "Đã gửi mã xác thực đặt lại mật khẩu về email", result: "OK" });
+        return res.status(200).json({
+            code: 200,
+            message: "Đã gửi mã xác thực đặt lại mật khẩu về email",
+            result: "OK",
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.forgotPassword = forgotPassword;
@@ -360,7 +468,9 @@ const verifyForgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, fun
     try {
         const { email, otp } = req.body;
         if (!email || !otp) {
-            return res.status(400).json({ code: 400, message: "Vui lòng cung cấp email và mã OTP" });
+            return res
+                .status(400)
+                .json({ code: 400, message: "Vui lòng cung cấp email và mã OTP" });
         }
         const forgotPassword = yield forgot_password_model_1.default.findOne({
             email,
@@ -369,11 +479,15 @@ const verifyForgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, fun
             expireAt: { $gt: new Date() },
         });
         if (!forgotPassword) {
-            return res.status(400).json({ code: 400, message: "Mã OTP không đúng hoặc đã hết hạn" });
+            return res
+                .status(400)
+                .json({ code: 400, message: "Mã OTP không đúng hoặc đã hết hạn" });
         }
         const user = yield user_model_1.default.findOne({ email, deleted: false });
         if (!user) {
-            return res.status(404).json({ code: 404, message: "Không tìm thấy người dùng" });
+            return res
+                .status(404)
+                .json({ code: 404, message: "Không tìm thấy người dùng" });
         }
         const newPassword = generateHelper.generateValidPassword();
         const hashedPassword = yield bcryptjs_1.default.hash(newPassword, 10);
@@ -388,21 +502,29 @@ const verifyForgotPassword = (req, res) => __awaiter(void 0, void 0, void 0, fun
       <p>Vì lý do bảo mật, không chia sẻ mật khẩu với bất kỳ ai.</p>
     `;
         (0, sendMail_1.sendEmail)(email, subject, html);
-        return res
-            .status(200)
-            .json({ code: 200, message: "Xác thực thành công. Mật khẩu mới đã được gửi về email của bạn." });
+        return res.status(200).json({
+            code: 200,
+            message: "Xác thực thành công. Mật khẩu mới đã được gửi về email của bạn.",
+        });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.verifyForgotPassword = verifyForgotPassword;
 const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { username, email, password, fullName, role, dob } = req.body;
-        const existedUser = yield user_model_1.default.findOne({ $or: [{ username }, { email }], deleted: false });
+        const existedUser = yield user_model_1.default.findOne({
+            $or: [{ username }, { email }],
+            deleted: false,
+        });
         if (existedUser) {
-            return res.status(409).json({ code: 409, message: "Tên đăng nhập hoặc email đã tồn tại" });
+            return res
+                .status(409)
+                .json({ code: 409, message: "Tên đăng nhập hoặc email đã tồn tại" });
         }
         const hashedPassword = yield bcryptjs_1.default.hash(password, 10);
         const user = yield user_model_1.default.create({
@@ -423,10 +545,14 @@ const createUser = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         }, JWT_SECRET);
         user.token = token;
         yield user.save();
-        return res.status(201).json({ code: 201, message: "Tạo tài khoản thành công", result: user });
+        return res
+            .status(201)
+            .json({ code: 201, message: "Tạo tài khoản thành công", result: user });
     }
     catch (error) {
-        return res.status(500).json({ code: 500, message: "Lỗi máy chủ", error: error.message });
+        return res
+            .status(500)
+            .json({ code: 500, message: "Lỗi máy chủ", error: error.message });
     }
 });
 exports.createUser = createUser;
